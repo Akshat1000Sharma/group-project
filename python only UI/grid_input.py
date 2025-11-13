@@ -12,6 +12,17 @@ INITIAL_BOARD[3][4] = 1   # Black
 INITIAL_BOARD[4][3] = 1   # Black
 INITIAL_BOARD[4][4] = -1  # White
 
+POSITION_WEIGHTS = [
+    [100, -20, 10, 5, 5, 10, -20, 100],
+    [-20, -50, -2, -2, -2, -2, -50, -20],
+    [10, -2, 0, 0, 0, 0, -2, 10],
+    [5, -2, 0, 0, 0, 0, -2, 5],
+    [5, -2, 0, 0, 0, 0, -2, 5],
+    [10, -2, 0, 0, 0, 0, -2, 10],
+    [-20, -50, -2, -2, -2, -2, -50, -20],
+    [100, -20, 10, 5, 5, 10, -20, 100],
+]
+
 class Othello:
     def __init__(self):
         self.board = copy.deepcopy(INITIAL_BOARD)
@@ -64,9 +75,22 @@ class Othello:
         black_pieces = sum(1 for row in self.board for cell in row if cell == 1)
         white_pieces = sum(1 for row in self.board for cell in row if cell == -1)
         score += (black_pieces - white_pieces) * (1 if player == 1 else -1)
+
+        # Mobility
         black_moves = len(self.get_valid_moves(1))
         white_moves = len(self.get_valid_moves(-1))
         score += (black_moves - white_moves) * (2 if player == 1 else -2)
+
+        # Positional weights
+        pos_score = 0
+        for r in range(BOARD_SIZE):
+            for c in range(BOARD_SIZE):
+                if self.board[r][c] == 1:
+                    pos_score += POSITION_WEIGHTS[r][c]
+                elif self.board[r][c] == -1:
+                    pos_score -= POSITION_WEIGHTS[r][c]
+        score += pos_score * (1 if player == 1 else -1)
+
         return score
 
     def is_terminal(self) -> bool:
