@@ -23,10 +23,11 @@ INITIAL_BOARD[4][3] = 1   # Black
 INITIAL_BOARD[4][4] = -1  # White
 
 class Othello:
-    def __init__(self):
+    def __init__(self, mode='ai'):
         self.board = copy.deepcopy(INITIAL_BOARD)
         self.current_player = 1  # Human starts (black)
         self.game_over = False
+        self.mode = mode
 
     def get_valid_moves(self, player: int) -> List[Tuple[int, int]]:
         """Find all valid moves for the player."""
@@ -162,6 +163,9 @@ class Move(BaseModel):
     row: int
     col: int
 
+class NewGameRequest(BaseModel):
+    mode: str
+
 def get_status() -> dict:
     winner = game.get_winner() if game.game_over else None
     valid_moves = game.get_valid_moves(game.current_player)
@@ -182,30 +186,33 @@ async def status():
     return get_status()
 
 @app.post("/move")
-async def make_human_move(move: Move):
-    success = game.make_move(move.row, move.col, 1)
+async def make_move(move: Move):
+    if game.mode == 'ai' and game.current_player != 1:
+        raise HTTPException(status_code=403, detail="Not your turn")
+    success = game.make_move(move.row, move.col, game.current_player)
     if not success:
         raise HTTPException(status_code=400, detail="Invalid move")
     
-    # Handle AI turn and skips
+    # Handle skips and AI turns
     while not game.is_terminal():
         next_player = game.current_player
-        valid_moves = game.get_valid_moves(next_player)
-        if len(valid_moves) == 0:
+        valid_moves_count = len(game.get_valid_moves(next_player))
+        if valid_moves_count == 0:
             game.current_player = -next_player
             continue
-        if next_player == -1:
+        if game.mode == 'ai' and next_player == -1:
             ai_move(game)
-        break
+        else:
+            break  # Human's turn next
     
     game.game_over = game.is_terminal()
     return get_status()
 
 @app.post("/new_game")
-async def new_game():
+async def new_game(request: NewGameRequest):
     global game
-    game = Othello()
-    return {"message": "New game started"}
+    game = Othello(mode=request.mode)
+    return {"message": f"New game started in {request.mode} mode"}
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)

@@ -5,7 +5,219 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Othello Game</title>
-    <link rel="stylesheet" href="styles.css">
+    <style>
+        /* styles.css */
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #228B22, #32CD32);
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .container {
+            text-align: center;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+        }
+
+        h1 {
+            color: #FFD700;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            margin-bottom: 20px;
+            font-size: 2.5em;
+        }
+
+        .scores {
+            display: flex;
+            justify-content: space-around;
+            margin: 20px 0;
+            gap: 20px;
+        }
+
+        .score {
+            padding: 15px 25px;
+            border-radius: 10px;
+            font-size: 1.3em;
+            font-weight: bold;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            transition: transform 0.2s;
+        }
+
+        .score:hover {
+            transform: scale(1.05);
+        }
+
+        .black-score {
+            background: #000;
+            color: #fff;
+        }
+
+        .white-score {
+            background: #fff;
+            color: #000;
+        }
+
+        .board-container {
+            margin: 20px 0;
+            display: inline-block;
+        }
+
+        .board {
+            display: inline-block;
+            border: 8px solid #8B4513;
+            border-radius: 10px;
+            background: #90EE90;
+            box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .row {
+            display: flex;
+        }
+
+        .cell {
+            width: 55px;
+            height: 55px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border: 1px solid #654321;
+            transition: background-color 0.2s;
+            position: relative;
+            box-sizing: border-box;
+        }
+
+        .cell:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .cell.empty::before {
+            content: '';
+        }
+
+        .cell.black::before {
+            content: '';
+            width: 45px;
+            height: 45px;
+            background: radial-gradient(circle, #333, #000);
+            border-radius: 50%;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.6), inset 0 2px 4px rgba(255, 255, 255, 0.1);
+        }
+
+        .cell.white::before {
+            content: '';
+            width: 45px;
+            height: 45px;
+            background: radial-gradient(circle, #f0f0f0, #fff);
+            border-radius: 50%;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3), inset 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .cell.valid {
+            background: rgba(255, 215, 0, 0.4) !important;
+            border: 2px solid #FFD700;
+        }
+
+        .status {
+            margin: 20px 0;
+            font-size: 1.2em;
+            color: #FFD700;
+        }
+
+        .status p {
+            margin: 5px 0;
+        }
+
+        #game-message {
+            font-weight: bold;
+            font-size: 1.3em;
+        }
+
+        button {
+            padding: 12px 30px;
+            font-size: 1.1em;
+            background: linear-gradient(135deg, #FFD700, #FFA500);
+            color: #333;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        @media (max-width: 600px) {
+            .cell {
+                width: 40px;
+                height: 40px;
+            }
+            .cell::before {
+                width: 30px;
+                height: 30px;
+            }
+            h1 {
+                font-size: 2em;
+            }
+        }
+
+        /* Modal styles */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            color: #333;
+        }
+
+        .modal-content h2 {
+            margin-bottom: 20px;
+            color: #228B22;
+        }
+
+        .mode-btn {
+            padding: 10px 20px;
+            margin: 10px;
+            background: linear-gradient(135deg, #FFD700, #FFA500);
+            color: #333;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: all 0.2s;
+        }
+
+        .mode-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+        }
+    </style>
 </head>
 <body>
     <div class="container">
@@ -26,7 +238,156 @@
             <p id="game-message"></p>
         </div>
         <button id="new-game">New Game</button>
+        <div id="mode-modal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <h2>Choose Game Mode</h2>
+                <button id="player-mode" class="mode-btn">Player vs Player</button>
+                <button id="ai-mode" class="mode-btn">Player vs AI</button>
+            </div>
+        </div>
     </div>
-    <script src="script.js"></script>
+    <script>
+        // script.js
+        const API_BASE = 'http://localhost:8000';
+        let currentState = null;
+        let mode = 'ai';
+
+        async function fetchStatus() {
+            try {
+                const response = await fetch(`${API_BASE}/status`);
+                if (!response.ok) {
+                    throw new Error('Failed to fetch status');
+                }
+                currentState = await response.json();
+                renderBoard();
+                updateUI();
+            } catch (error) {
+                console.error('Error fetching status:', error);
+                document.getElementById('game-message').textContent = 'Connection error. Please start the server.';
+            }
+        }
+
+        function renderBoard() {
+            const boardEl = document.getElementById('board');
+            boardEl.innerHTML = '';
+            for (let r = 0; r < 8; r++) {
+                const rowEl = document.createElement('div');
+                rowEl.className = 'row';
+                for (let c = 0; c < 8; c++) {
+                    const cellEl = document.createElement('div');
+                    cellEl.className = 'cell';
+                    cellEl.dataset.row = r;
+                    cellEl.dataset.col = c;
+
+                    const val = currentState.board[r][c];
+                    if (val === 1) {
+                        cellEl.classList.add('black');
+                    } else if (val === -1) {
+                        cellEl.classList.add('white');
+                    } else {
+                        cellEl.classList.add('empty');
+                    }
+
+                    if (currentState.valid_moves && currentState.valid_moves.some(([mr, mc]) => mr === r && mc === c)) {
+                        cellEl.classList.add('valid');
+                    }
+
+                    cellEl.addEventListener('click', handleCellClick);
+                    rowEl.appendChild(cellEl);
+                }
+                boardEl.appendChild(rowEl);
+            }
+        }
+
+        function handleCellClick(event) {
+            const row = parseInt(event.target.dataset.row);
+            const col = parseInt(event.target.dataset.col);
+            if (currentState.game_over) return;
+            if (mode === 'ai' && currentState.current_player !== 1) return;
+            if (!currentState.valid_moves.some(([mr, mc]) => mr === row && mc === col)) return;
+
+            makeMove(row, col);
+        }
+
+        async function makeMove(row, col) {
+            try {
+                const response = await fetch(`${API_BASE}/move`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ row, col })
+                });
+                if (!response.ok) {
+                    const error = await response.json();
+                    alert(error.error || 'Invalid move');
+                    return;
+                }
+                currentState = await response.json();
+                renderBoard();
+                updateUI();
+            } catch (error) {
+                console.error('Error making move:', error);
+            }
+        }
+
+        function updateUI() {
+            if (!currentState) return;
+
+            document.getElementById('black-count').textContent = currentState.black_pieces;
+            document.getElementById('white-count').textContent = currentState.white_pieces;
+
+            let playerName;
+            if (currentState.current_player === 1) {
+                playerName = 'Black';
+            } else if (mode === 'ai') {
+                playerName = 'White (AI thinking...)';
+            } else {
+                playerName = 'White';
+            }
+            document.getElementById('current-player').textContent = `Current player: ${playerName}`;
+
+            const messageEl = document.getElementById('game-message');
+            if (currentState.game_over) {
+                let message = '';
+                if (currentState.winner === 1) {
+                    message = 'Black wins!';
+                } else if (currentState.winner === -1) {
+                    message = 'White wins!';
+                } else {
+                    message = 'It\'s a draw!';
+                }
+                messageEl.textContent = message;
+            } else {
+                messageEl.textContent = '';
+            }
+        }
+
+        function startNewGame(selectedMode) {
+            mode = selectedMode;
+            document.getElementById('mode-modal').style.display = 'none';
+            fetch(`${API_BASE}/new_game`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ mode: selectedMode })
+            }).then(() => fetchStatus()).catch(error => {
+                console.error('Error starting new game:', error);
+                alert('Error starting new game');
+            });
+        }
+
+        document.getElementById('new-game').addEventListener('click', () => {
+            document.getElementById('mode-modal').style.display = 'flex';
+        });
+
+        document.getElementById('player-mode').addEventListener('click', () => {
+            startNewGame('player');
+        });
+
+        document.getElementById('ai-mode').addEventListener('click', () => {
+            startNewGame('ai');
+        });
+
+        // Initialize
+        fetchStatus();
+    </script>
 </body>
 </html>
