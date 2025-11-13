@@ -1,5 +1,5 @@
 // script.js
-const API_BASE = 'http://localhost:8000';
+const API_BASE = 'https://fastapi-eta-seven.vercel.app';
 let currentState = null;
 
 async function fetchStatus() {
