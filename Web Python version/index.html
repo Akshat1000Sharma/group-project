@@ -245,12 +245,78 @@
                 <button id="ai-mode" class="mode-btn">Player vs AI</button>
             </div>
         </div>
+        <div id="thinking-modal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <h2>AI is thinking...</h2>
+            </div>
+        </div>
     </div>
     <script>
         // script.js
         const API_BASE = 'http://localhost:8000';
         let currentState = null;
         let mode = 'ai';
+
+        const directions = [[-1, -1], [-1, 0], [-1, 1], [0, -1], [0, 1], [1, -1], [1, 0], [1, 1]];
+
+        function isValidFlip(r, c, dr, dc, player) {
+            let nr = r + dr;
+            let nc = c + dc;
+            const SIZE = 8;
+            if (nr < 0 || nr >= SIZE || nc < 0 || nc >= SIZE || currentState.board[nr][nc] !== -player) {
+                return false;
+            }
+            while (nr >= 0 && nr < SIZE && nc >= 0 && nc < SIZE) {
+                if (currentState.board[nr][nc] === player) {
+                    return true;
+                }
+                if (currentState.board[nr][nc] === 0) {
+                    return false;
+                }
+                nr += dr;
+                nc += dc;
+            }
+            return false;
+        }
+
+        function getValidMoves(player) {
+            let moves = [];
+            for (let r = 0; r < 8; r++) {
+                for (let c = 0; c < 8; c++) {
+                    if (currentState.board[r][c] === 0) {
+                        let valid = false;
+                        for (let [dr, dc] of directions) {
+                            if (isValidFlip(r, c, dr, dc, player)) {
+                                valid = true;
+                                break;
+                            }
+                        }
+                        if (valid) {
+                            moves.push([r, c]);
+                        }
+                    }
+                }
+            }
+            return moves;
+        }
+
+        function applyMoveLocally(row, col, player) {
+            // Assume move is valid
+            currentState.board[row][col] = player;
+            for (let [dr, dc] of directions) {
+                if (isValidFlip(row, col, dr, dc, player)) {
+                    let nr = row + dr;
+                    let nc = col + dc;
+                    while (currentState.board[nr][nc] === -player) {
+                        currentState.board[nr][nc] = player;
+                        nr += dr;
+                        nc += dc;
+                    }
+                }
+            }
+            currentState.current_player = -player;
+            currentState.valid_moves = getValidMoves(currentState.current_player);
+        }
 
         async function fetchStatus() {
             try {
@@ -288,7 +354,9 @@
                         cellEl.classList.add('empty');
                     }
 
-                    if (currentState.valid_moves && currentState.valid_moves.some(([mr, mc]) => mr === r && mc === c)) {
+                    const shouldHighlight = currentState.valid_moves && currentState.valid_moves.some(([mr, mc]) => mr === r && mc === c) &&
+                        (mode !== 'ai' || currentState.current_player === 1);
+                    if (shouldHighlight) {
                         cellEl.classList.add('valid');
                     }
 
@@ -299,14 +367,23 @@
             }
         }
 
-        function handleCellClick(event) {
+        async function handleCellClick(event) {
             const row = parseInt(event.target.dataset.row);
             const col = parseInt(event.target.dataset.col);
             if (currentState.game_over) return;
             if (mode === 'ai' && currentState.current_player !== 1) return;
             if (!currentState.valid_moves.some(([mr, mc]) => mr === row && mc === col)) return;
 
-            makeMove(row, col);
+            const player = currentState.current_player;
+            applyMoveLocally(row, col, player);
+            renderBoard();
+            updateUI();
+
+            if (mode === 'ai') {
+                showThinkingModal();
+            }
+
+            await makeMove(row, col);
         }
 
         async function makeMove(row, col) {
@@ -317,14 +394,19 @@
                     body: JSON.stringify({ row, col })
                 });
                 if (!response.ok) {
-                    const error = await response.json();
-                    alert(error.error || 'Invalid move');
+                    const errorData = await response.json().catch(() => ({}));
+                    await fetchStatus(); // Revert to server state
+                    if (mode === 'ai') hideThinkingModal();
+                    alert(errorData.detail || errorData.error || 'Invalid move');
                     return;
                 }
                 currentState = await response.json();
                 renderBoard();
                 updateUI();
+                if (mode === 'ai') hideThinkingModal();
             } catch (error) {
+                await fetchStatus(); // Revert
+                if (mode === 'ai') hideThinkingModal();
                 console.error('Error making move:', error);
             }
         }
@@ -339,7 +421,7 @@
             if (currentState.current_player === 1) {
                 playerName = 'Black';
             } else if (mode === 'ai') {
-                playerName = 'White (AI thinking...)';
+                playerName = 'White (AI)';
             } else {
                 playerName = 'White';
             }
@@ -359,6 +441,14 @@
             } else {
                 messageEl.textContent = '';
             }
+        }
+
+        function showThinkingModal() {
+            document.getElementById('thinking-modal').style.display = 'flex';
+        }
+
+        function hideThinkingModal() {
+            document.getElementById('thinking-modal').style.display = 'none';
         }
 
         function startNewGame(selectedMode) {
