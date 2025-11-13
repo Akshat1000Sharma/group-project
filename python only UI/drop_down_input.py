@@ -1,5 +1,4 @@
 import streamlit as st
-import copy
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 from matplotlib.patches import Circle
@@ -18,9 +17,18 @@ INITIAL_BOARD[4][4] = -1  # White
 
 class Othello:
     def __init__(self):
-        self.board = copy.deepcopy(INITIAL_BOARD)
+        # deep copy of INITIAL_BOARD without using copy module
+        self.board = [row[:] for row in INITIAL_BOARD]
         self.current_player = 1  # Human starts (black)
         self.game_over = False
+
+    def clone(self):
+        """Return a deep-cloned Othello game (no copy module used)."""
+        new_game = Othello()
+        new_game.board = [row[:] for row in self.board]
+        new_game.current_player = self.current_player
+        new_game.game_over = self.game_over
+        return new_game
     
     def get_valid_moves(self, player):
         """Find all valid moves for the player."""
@@ -111,7 +119,7 @@ def minimax(game, depth, alpha, beta, maximizing_player):
     if maximizing_player:
         max_eval = float('-inf')
         for r, c in moves:
-            new_game = copy.deepcopy(game)
+            new_game = game.clone()
             new_game.make_move(r, c, game.current_player)
             eval_score = minimax(new_game, depth - 1, alpha, beta, False)
             max_eval = max(max_eval, eval_score)
@@ -122,7 +130,7 @@ def minimax(game, depth, alpha, beta, maximizing_player):
     else:
         min_eval = float('inf')
         for r, c in moves:
-            new_game = copy.deepcopy(game)
+            new_game = game.clone()
             new_game.make_move(r, c, game.current_player)
             eval_score = minimax(new_game, depth - 1, alpha, beta, True)
             min_eval = min(min_eval, eval_score)
@@ -137,7 +145,7 @@ def ai_move(game, depth=4):
     best_move = None
     moves = game.get_valid_moves(game.current_player)
     for r, c in moves:
-        new_game = copy.deepcopy(game)
+        new_game = game.clone()
         new_game.make_move(r, c, game.current_player)
         score = minimax(new_game, depth - 1, float('-inf'), float('inf'), False)
         if score > best_score:
